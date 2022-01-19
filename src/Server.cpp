@@ -1,91 +1,226 @@
+#include <Arduino.h>
 #include <WiFi.h>
 #include <esp_task_wdt.h>
+#include <ESPAsyncWebServer.h>
+#include <AsyncTCP.h>
+
 #include "Server.h"
 #include "main.h"
 
-String header;
-String ledState;
+bool ledState = 0;
+AsyncWebServer server(80);
+AsyncWebSocket ws("/ws");
 
-[[noreturn]] void ServerTask( void * parameter ){
-    WiFiServer server = *((WiFiServer*)parameter);
-    WiFiClient client = server.available();     // Listen for incoming clients
+const char index_html[] PROGMEM = R"rawliteral(
+<!DOCTYPE HTML><html>
+<head>
+  <title>ESP Web Server</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <style>
+  html {
+    font-family: Arial, Helvetica, sans-serif;
+    text-align: center;
+  }
+  h1 {
+    font-size: 1.8rem;
+    color: white;
+  }
+  h2{
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #143642;
+  }
+  .topnav {
+    overflow: hidden;
+    background-color: #143642;
+  }
+  body {
+    margin: 0;
+  }
+  .content {
+    padding: 30px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .card {
+    background-color: #F8F7F9;;
+    box-shadow: 2px 2px 12px 1px rgba(140,140,140,.5);
+    padding-top:10px;
+    padding-bottom:20px;
+  }
+  .button {
+    padding: 15px 50px;
+    font-size: 24px;
+    text-align: center;
+    outline: none;
+    color: #fff;
+    background-color: #0f8b8d;
+    border: none;
+    border-radius: 5px;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+   }
+   /*.button:hover {background-color: #0f8b8d}*/
+   .button:active {
+     background-color: #0f8b8d;
+     box-shadow: 2 2px #CDCDCD;
+     transform: translateY(2px);
+   }
+   .state {
+     font-size: 1.5rem;
+     color:#8c8c8c;
+     font-weight: bold;
+   }
+  </style>
+<title>ESP Web Server</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+</head>
+<body>
+  <div class="topnav">
+    <h1>ESP WebSocket Server</h1>
+  </div>
+  <div class="content">
+    <div class="card">
+      <h2>Output - GPIO 2</h2>
+      <p class="state">state: <span id="state">%STATE%</span></p>
+      <p><button id="button" class="button">Toggle</button></p>
+    </div>
+  </div>
+<script>
+  var gateway = `ws://${window.location.hostname}/ws`;
+  var websocket;
+  window.addEventListener('load', onLoad);
+  function initWebSocket() {
+    console.log('Trying to open a WebSocket connection...');
+    websocket = new WebSocket(gateway);
+    websocket.onopen    = onOpen;
+    websocket.onclose   = onClose;
+    websocket.onmessage = onMessage; // <-- add this line
+  }
+  function onOpen(event) {
+    console.log('Connection opened');
+  }
+  function onClose(event) {
+    console.log('Connection closed');
+    setTimeout(initWebSocket, 2000);
+  }
+  function onMessage(event) {
+    var state;
+    if (event.data == "1"){
+      state = "ON";
+    }
+    else{
+      state = "OFF";
+    }
+    document.getElementById('state').innerHTML = state;
+  }
+  function onLoad(event) {
+    initWebSocket();
+    initButton();
+  }
+  function initButton() {
+    document.getElementById('button').addEventListener('click', toggle);
+  }
+  function toggle(){
+    websocket.send('toggle');
+  }
+</script>
+</body>
+</html>
+)rawliteral";
 
-    while(true)
+void notifyClients()
+{
+    ws.textAll(String(ledState));
+}
+
+void handleWebSocketMessage(void *arg, uint8_t *data, size_t length)
+{
+    AwsFrameInfo *info = (AwsFrameInfo *) arg;
+    if (info->final && info->index == 0 && info->len == length && info->opcode == WS_TEXT)
     {
-        if (client) {                             // If a new client connects,
-            Serial.println("New Client.");          // print a message out in the serial port
-            String currentLine = "";                // make a String to hold incoming data from the client
-            while (client.connected()) {            // loop while the client's connected
-                /*if (client.available()) {             // if there's bytes to read from the client,
-                    char c = client.read();             // read a byte, then
-                    Serial.write(c);                    // print it out the serial monitor
-                    header += c;
-                    if (c == '\n') {                    // if the byte is a newline character
-                        // if the current line is blank, you got two newline characters in a row.
-                        // that's the end of the client HTTP request, so send a response:
-                        if (currentLine.length() == 0) {
-                            // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
-                            // and a content-type so the client knows what's coming, then a blank line:
-                            client.println("HTTP/1.1 200 OK");
-                            client.println("Content-type:text/html");
-                            client.println("Connection: close");
-                            client.println();
-
-                            // turns the GPIOs on and off
-                            if (header.indexOf("GET /26/on") >= 0) {
-                                Serial.println("GPIO 26 on");
-                                ledState = "on";
-                                digitalWrite(ledPin, HIGH);
-                            } else if (header.indexOf("GET /26/off") >= 0) {
-                                Serial.println("GPIO 26 off");
-                                ledState = "off";
-                                digitalWrite(ledPin, LOW);
-                            }
-
-                            // Display the HTML web page
-                            client.println("<!DOCTYPE html><html>");
-                            client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
-                            client.println("<link rel=\"icon\" href=\"data:,\">");
-                            // CSS to style the on/off buttons
-                            // Feel free to change the background-color and font-size attributes to fit your preferences
-                            client.println("<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}");
-                            client.println(".button { background-color: #4CAF50; border: none; color: white; padding: 16px 40px;");
-                            client.println("text-decoration: none; font-size: 30px; margin: 2px; cursor: pointer;}");
-                            client.println(".button2 {background-color: #555555;}</style></head>");
-
-                            // Web Page Heading
-                            client.println("<body><h1>ESP32 Web Server</h1>");
-
-                            // Display current state, and ON/OFF buttons for GPIO 26
-                            client.println("<p>GPIO 26 - State " + ledState + "</p>");
-                            // If the output26State is off, it displays the ON button
-                            if (ledState=="off") {
-                                client.println("<p><a href=\"/26/on\"><button class=\"button\">ON</button></a></p>");
-                            } else {
-                                client.println("<p><a href=\"/26/off\"><button class=\"button button2\">OFF</button></a></p>");
-                            }
-                            client.println("</body></html>");
-
-                            // The HTTP response ends with another blank line
-                            client.println();
-                            // Break out of the while loop
-                            break;
-                        } else { // if you got a newline, then clear currentLine
-                            currentLine = "";
-                        }
-                    } else if (c != '\r') {  // if you got anything else but a carriage return character,
-                        currentLine += c;      // add it to the end of the currentLine
-                    }
-                }*/
-                taskYIELD();
-            }
-            // Clear the header variable
-            header = "";
-            // Close the connection
-            client.stop();
-            Serial.println("Client disconnected.");
-            Serial.println("");
+        data[length] = 0;
+        if (strcmp((char *) data, "toggle") == 0)
+        {
+            ledState = !ledState;
+            notifyClients();
         }
+    }
+}
+
+void EventHandle(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data,
+                 size_t length)
+{
+    switch (type)
+    {
+        case WS_EVT_CONNECT:
+            Serial.printf("WebSocket %s: client %u connected from %s\n", server->url(), client->id(),
+                          client->remoteIP().toString().c_str());
+            break;
+        case WS_EVT_DISCONNECT:
+            Serial.printf("WebSocket %s: client %u disconnected", server->url(), client->id());
+            break;
+        case WS_EVT_DATA:
+            handleWebSocketMessage(arg, data, length);
+            break;
+        case WS_EVT_ERROR:
+            Serial.printf("WebSocket %s: client %u error %u: %s\n", server->url(), client->id(), *((uint16_t *) arg),
+                          (char *) data);
+            break;
+        case WS_EVT_PONG:
+            break;
+    }
+}
+
+void initWebSocket()
+{
+    ws.onEvent(EventHandle);
+    server.addHandler(&ws);
+}
+
+String processor(const String &var)
+{
+    Serial.println(var);
+    if (var == "STATE")
+    {
+        if (ledState)
+        {
+            return "ON";
+        }
+        return "OFF";
+    }
+    return {};
+}
+
+[[noreturn]] void ServerTask(void *parameter)
+{
+    TickType_t xLastWakeTime;
+    const TickType_t xFrequency = 100;
+    xLastWakeTime = xTaskGetTickCount();
+
+    int i = 0;
+    initWebSocket();
+
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+    {
+        request->send_P(200, "text/html", index_html, processor);
+    });
+
+    server.begin();
+
+    while (true)
+    {
+        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+        i++;
+        ws.cleanupClients();
+        digitalWrite(ledPin, ledState);
         taskYIELD();
     }
 }

@@ -1,6 +1,8 @@
 #ifndef UNTITLED1_MAIN_H
 #define UNTITLED1_MAIN_H
 
-const int ledPin = 26;
+#include <Arduino.h>
+
+const int ledPin = 32;
 
 #endif
