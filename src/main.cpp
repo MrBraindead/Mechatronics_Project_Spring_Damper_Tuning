@@ -1,4 +1,5 @@
 #include <esp_task_wdt.h>
+#include <SPIFFS.h>
 
 #include "SensorReadTask.h"
 #include "Server.h"
@@ -49,7 +50,7 @@ void setup()
     WiFi.onEvent(ClientDisconnected, SYSTEM_EVENT_AP_STADISCONNECTED);
 
     xTaskCreatePinnedToCore(SensorReadTask, "Sensor", 10000, (void*)&sample_size, 1, &TaskHandles[Tasks::Sensor], 1);
-    vTaskSuspend(TaskHandles[Tasks::Sensor]);
+    //vTaskSuspend(TaskHandles[Tasks::Sensor]);
 
     xTaskCreatePinnedToCore(ServerTask, "Server", 10000, nullptr, 1, &TaskHandles[Tasks::Server], 0);
     vTaskSuspend(TaskHandles[Tasks::Server]);
