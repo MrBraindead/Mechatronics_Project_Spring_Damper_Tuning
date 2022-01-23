@@ -2,7 +2,7 @@
 #include <esp_task_wdt.h>
 #include "SensorReadTask.h"
 
-[[noreturn]] void SensorReadTask( void * parameter )
+void SensorReadTask( void * parameter )
 {
     while(true)
     {

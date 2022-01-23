@@ -23,6 +23,7 @@ void ClientConnected(WiFiEvent_t event, WiFiEventInfo_t info)
         vTaskResume(TaskHandles[Tasks::Server]);
     }
 }
+
 void ClientDisconnected(WiFiEvent_t event, WiFiEventInfo_t info)
 {
     Serial.println("Client disconnected from AP");
@@ -32,8 +33,6 @@ void ClientDisconnected(WiFiEvent_t event, WiFiEventInfo_t info)
         vTaskSuspend(TaskHandles[Tasks::Server]);
     }
 }
-
-
 
 void setup()
 {
@@ -55,7 +54,7 @@ void setup()
     xTaskCreatePinnedToCore(ServerTask, "Server", 10000, nullptr, 1, &TaskHandles[Tasks::Server], 0);
     vTaskSuspend(TaskHandles[Tasks::Server]);
 
-    //xTaskCreatePinnedToCore(OptimizeTasks, "OptimizeTasks", 10000, (void*)&TaskHandles, 1, TaskHandles[2], 0);
+    //xTaskCreatePinnedToCore(OptimizeTasks, "Optimizer", 10000, (void*)&TaskHandles, 1, TaskHandles[2], 0);
     esp_task_wdt_delete(xTaskGetIdleTaskHandle());
 }
 

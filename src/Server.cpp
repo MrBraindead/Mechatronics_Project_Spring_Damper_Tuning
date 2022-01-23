@@ -30,6 +30,9 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t length)
             ledState = !ledState;
             notifyClients();
         }
+        else{
+            Serial.println(reinterpret_cast<char*>(data));
+        }
     }
 }
 
@@ -76,7 +79,7 @@ String processor(const String &var)
     return {};
 }
 
-[[noreturn]] void ServerTask(void *parameter)
+void ServerTask(void *parameter)
 {
     TickType_t xLastWakeTime;
     const TickType_t xFrequency = 100;
@@ -105,6 +108,17 @@ String processor(const String &var)
     {
         request->send(SPIFFS, "/page.html", String(), false, processor);
     });
+
+    server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request)
+    {
+        request->send(SPIFFS, "/style.css");
+    });
+
+    server.on("/script.js", HTTP_GET, [](AsyncWebServerRequest *request)
+    {
+        request->send(SPIFFS, "/script.js");
+    });
+
 
     server.begin();
 
