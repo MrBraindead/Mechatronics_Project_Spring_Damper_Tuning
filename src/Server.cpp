@@ -38,7 +38,6 @@ void notifyClients()
         catch(std::exception &e){
             Serial.println(e.what());
         }
-
     }
 }
 
@@ -119,8 +118,6 @@ void ServerTask(void *parameter)
 
     while (true)
     {
-        vTaskDelayUntil(&xLastWakeTime, xFrequency);
-        i++;
         ws.cleanupClients();
         digitalWrite(ledPin, ledState);
         taskYIELD();

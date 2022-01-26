@@ -20,8 +20,6 @@
 const char *ssid = "ESP32";
 const char *password = "123456789";
 
-DNSServer dnsServer;
-
 static std::queue<char> data_queue;
 
 enum Tasks { Sensor, Server, Files };
@@ -60,9 +58,6 @@ void setup()
     }
 
     WiFi.softAP(ssid, password);
-    WiFi.softAPConfig(IPAddress(192,168,4,1), IPAddress(192,168,4,1), IPAddress(255, 255, 255, 0));
-    dnsServer.start(53, "*", IPAddress(192,168,4,1));
-
     IPAddress IP = WiFi.softAPIP();
     Serial.print("AccessPoint IP: ");
     Serial.println(IP);

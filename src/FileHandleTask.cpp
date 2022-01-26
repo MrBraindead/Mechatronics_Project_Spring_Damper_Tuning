@@ -24,7 +24,7 @@
             }
             while(!((std::queue<char>*)parameter)->empty())
             {
-                file.println((char)((std::queue<char>*)parameter)->front());
+                file.print((char)((std::queue<char>*)parameter)->front());
                 ((std::queue<char>*)parameter)->pop();
             }
             file.close();

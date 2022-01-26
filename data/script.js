@@ -9,7 +9,7 @@ function initWebSocket() {
   	websocket = new WebSocket(gateway);
   	websocket.onopen    = onOpen;
   	websocket.onclose   = onClose;
-  	websocket.onmessage = onMessage; // <-- add this line
+  	websocket.onmessage = onMessage;
 }
 function onOpen(event) {
   	console.log('Connection opened');
@@ -25,88 +25,39 @@ function onMessage(event) {
     const rear_data = [];
     const xmlhttp = new XMLHttpRequest();
     xmlhttp.open("GET", "/data.bin", false);
+    xmlhttp.overrideMimeType("application/x-binary; charset=ISO-8859-1"); // Changing MIME Type so data is properly decoded
     xmlhttp.send();
     if(xmlhttp.status === 200){
         result = xmlhttp.responseText;
     }
     if(result != null) {
-        // create chart for fork travel
+        // recreating the chart for fork travel with a different minimum Width
         chart_front_travel = Highcharts.chart('chart_front_travel', {
-            chart: {
-                type: 'line',
-                scrollablePlotArea: {
-                    minWidth: result.length * 10,
-                    scrollPosition: 1
-                }
-            },
-            title: {
-                text: 'fork travel'
-            },
-            xAxis: {
-                type: 'datetime'
-            },
-            yAxis: {
-                title: {
-                    text: 'travel (mm)'
-                }
-            },
-            series: [{
-                name: ''
-            }],
-            plotOptions:{
-                line:{
-                    lineWidth: 1,
-                },
-                series:{
-                    pointStart:0,
-                    pointInterval: 1, // interval in ms
-                    turboThreshold: 0,
-                },
-            }
+            chart: { type: 'line', scrollablePlotArea: { minWidth: result.length, scrollPosition: 1 } },
+            title: { text: 'fork travel' },
+            xAxis: { type: 'datetime' },
+            yAxis: { title: { text: 'travel (mm)' } },
+            series: [{ name: '' }],
+            plotOptions:{ line:{ lineWidth: 1, }, series:{ pointStart:0, pointInterval: 1, turboThreshold: 0, }, }
         });
 
-        // create chart for shock travel
+        // recreating the chart for shock travel with a different minimum Width
         chart_rear_travel = Highcharts.chart('chart_rear_travel', {
-            chart: {
-                type: 'line',
-                scrollablePlotArea: {
-                    minWidth: result.length * 10,
-                    scrollPosition: 1
-                }
-            },
-            title: {
-                text: 'shock travel'
-            },
-            xAxis: {
-                type: 'datetime'
-            },
-            yAxis: {
-                title: {
-                    text: 'travel (mm)'
-                }
-            },
-            series: [{
-                name: ''
-            }],
-            plotOptions:{
-                line:{
-                    lineWidth: 1,
-                },
-                series:{
-                    pointStart:0,
-                    pointInterval: 10 // interval in ms
-                }
-            }
+            chart: { type: 'line', scrollablePlotArea: { minWidth: result.length, scrollPosition: 1 } },
+            title: { text: 'shock travel' },
+            xAxis: { type: 'datetime' },
+            yAxis: { title: { text: 'travel (mm)' } },
+            series: [{ name: '' }],
+            plotOptions:{ line:{ lineWidth: 1, }, series:{ pointStart:0, pointInterval: 10 } }
         });
         for(let i = 0; i < result.length; i++) {
+            console.log(result.charCodeAt(i));
             if(i%2)
             {
-                front_data.push(result.charAt(i).charCodeAt(0));
-                console.log(result.charAt(i).charCodeAt(0));
+                front_data.push(result.charCodeAt(i));
                 continue;
             }
-            rear_data.push(result.charAt(i).charCodeAt(0));
-            console.log(result.charAt(i).charCodeAt(0));
+            rear_data.push(result.charCodeAt(i));
         }
         chart_front_travel.series[0].setData(front_data);
         chart_rear_travel.series[0].setData(rear_data);
