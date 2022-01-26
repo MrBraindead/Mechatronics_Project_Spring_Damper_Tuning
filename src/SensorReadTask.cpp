@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
- * This task reads the output of the sensors, processes the information and the send the data to another class that is
- * tasked with storing the data *
+ * This task reads the output of the sensors, processes the information and the send the data to another Task that is
+ * responsible for storing the data
  *
  * author: Mika Schmitt scmi1066@h-ka.de *
  * last modified: 26.01.2022 *
@@ -16,22 +16,22 @@ void SensorReadTask( void * parameter )
 {
     TickType_t lastWakeTime;
     const TickType_t period = 10; // Specifies the period the task runs at in milliseconds
-    pinMode(potentiometer, INPUT);
+    pinMode(potentiometer_front, INPUT);
+    pinMode(potentiometer_rear, INPUT);
     while(true)
     {
         try
         {
             // Runs the Task at a given period
             vTaskDelayUntil(&lastWakeTime, period);
-
-            unsigned int input = analogRead(potentiometer);
             // Projecting 12 bit value to 8 bit by shifting 4 to the right
             // This way we only have to store and send half the data.
             // We lose 4 bits of precision but this is totally fine
             // in this application
+            unsigned int input = analogRead(potentiometer_front);
             ((std::queue<char>*)parameter)->push((char)(input >> 4));
-
-            Serial.println(input >> 4);
+            input = analogRead(potentiometer_rear);
+            ((std::queue<char>*)parameter)->push((char)(input >> 4));
         }
         catch(std::exception &e)
         {

@@ -14,18 +14,21 @@
 
 #include "Server.h"
 #include "main.h"
+#include "ToggleSensorsTask.h"
 
-bool ledState = 0;
-AsyncWebServer server(80);
-AsyncWebSocket ws("/ws");
+bool ledState = false;
+AsyncWebServer server(80); // creates the server
+AsyncWebSocket ws("/ws");   // creates the websocket
 
-const char *index_html;
+TaskHandle_t handle;
 
+// sends the Uri for the data to all clients
 void sendDataUri()
 {
     ws.textAll("/data.bin");
 }
 
+// notifies the clients of the current state of the sensors
 void notifyClients(bool state)
 {
     if(state)
@@ -36,25 +39,24 @@ void notifyClients(bool state)
     ws.textAll("SensorOFF");
 }
 
+// handles messages from the WebSocket
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t length)
 {
     AwsFrameInfo *info = (AwsFrameInfo *) arg;
     if (info->final && info->index == 0 && info->len == length && info->opcode == WS_TEXT)
     {
         data[length] = 0;
-        if (strcmp((char *) data, "getData") == 0)
+        if (strcmp((char *) data, "getData") == 0) // Client request Uri for data
         {
             sendDataUri();
             return;
         }
-        if(strcmp((char *) data, "toggleSensors") == 0)
+        if(strcmp((char *) data, "toggleSensors") == 0) // Client requests to toggle the sensors
         {
-            running = !running;
-            ToggleSensors(running);
-            notifyClients(running);
+            xTaskCreatePinnedToCore(ToggleSensors, "SensorToggle", 10000, handle, 0, nullptr, 1);
             return;
         }
-        if(strcmp((char *) data, "clear") == 0)
+        if(strcmp((char *) data, "clear") == 0) // Client requests to clear the sensor data
         {
             File file = SPIFFS.open("/data.bin", FILE_WRITE);
             if(file)
@@ -68,6 +70,7 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t length)
     }
 }
 
+// handles WebSocket events
 void EventHandle(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t length)
 {
     switch (type)
@@ -89,6 +92,7 @@ void EventHandle(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventT
     }
 }
 
+// initalizes the WebSocket
 void initWebSocket()
 {
     ws.onEvent(EventHandle);
@@ -97,6 +101,7 @@ void initWebSocket()
 
 void ServerTask(void *parameter)
 {
+    handle = (TaskHandle_t)parameter;
     TickType_t xLastWakeTime;
     const TickType_t xFrequency = 100;
     xLastWakeTime = xTaskGetTickCount();
@@ -104,22 +109,28 @@ void ServerTask(void *parameter)
     int i = 0;
     initWebSocket();
 
+    // server events:
+    // returns page
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
     {
         request->send(SPIFFS, "/page.html", String(), false);
     });
+    // returns style sheet
     server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request)
     {
         request->send(SPIFFS, "/style.css");
     });
+    // returns script
     server.on("/script.js", HTTP_GET, [](AsyncWebServerRequest *request)
     {
         request->send(SPIFFS, "/script.js");
     });
+    // returns script for charts
     server.on("/highcharts.js", HTTP_GET, [](AsyncWebServerRequest *request)
     {
         request->send(SPIFFS, "/highcharts.js");
     });
+    // returns data
     server.on("/data.bin", HTTP_GET, [](AsyncWebServerRequest *request)
     {
         request->send(SPIFFS, "/data.bin");
@@ -130,7 +141,6 @@ void ServerTask(void *parameter)
     while (true)
     {
         ws.cleanupClients();
-        digitalWrite(ledPin, ledState);
         taskYIELD();
     }
 }

@@ -8,6 +8,7 @@
 
 #include <WiFi.h>
 
+void notifyClients(bool state);
 void ServerTask( void * pvParameters );
 
-#endif //SERVER_H
+#endif

@@ -30,4 +30,4 @@ add_custom_target(
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-add_executable(Z_DUMMY_TARGET ${SRC_LIST} src/OptimizeTasksTask.cpp src/FileHandleTask.cpp include/FileHandleTask.h include/Queue.h include/ysfdgsd.h)
+add_executable(Z_DUMMY_TARGET ${SRC_LIST} src/FileHandleTask.cpp include/FileHandleTask.h src/ToggleSensorsTask.cpp include/ToggleSensorsTask.h)

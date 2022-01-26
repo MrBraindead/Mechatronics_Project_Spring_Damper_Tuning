@@ -8,9 +8,10 @@
 
 #include <Arduino.h>
 
-static bool running;
-const int ledPin = 32;
+static bool running;    // true if sensors are on
+const char buttonPin = 25;
+enum Tasks { Sensor, Server, Files };
 
-void ToggleSensors(bool state);
+void ToggleSensors();
 
 #endif
