@@ -1,18 +1,31 @@
+/***********************************************************************************************************************
+ *  *
+ *
+ * references: Charts by Highchart https://www.highcharts.com licenced under a Student License (Creative Commons (CC) Attribution-Non-Commercial) *
+ *
+ * author: Mika Schmitt scmi1066@h-ka.de *
+ * usage: boot up the ESP32 -> Connect to the AP with the SSID "ESP32" -> Open Website on 192.168.4.1 *
+ * last modified: 25.01.2022 *
+***********************************************************************************************************************/
+
 #include <esp_task_wdt.h>
 #include <SPIFFS.h>
-
+#include <DNSServer.h>
+#include "FileHandleTask.h"
 #include "SensorReadTask.h"
 #include "Server.h"
 #include "main.h"
+#include <queue>
 
 const char *ssid = "ESP32";
 const char *password = "123456789";
 
-char sample_size = 10;
+DNSServer dnsServer;
 
-enum Tasks { Sensor, Server, Optimizer };
+static std::queue<char> data_queue;
 
-TaskHandle_t TaskHandles[2] = {nullptr, nullptr};
+enum Tasks { Sensor, Server, Files };
+TaskHandle_t TaskHandles[3] = {nullptr, nullptr, nullptr};
 
 void ClientConnected(WiFiEvent_t event, WiFiEventInfo_t info)
 {
@@ -41,24 +54,31 @@ void setup()
     pinMode(ledPin, OUTPUT);
     digitalWrite(ledPin, LOW);
 
+    if(!SPIFFS.begin(true)){
+        Serial.println("An Error has occurred while mounting SPIFFS");
+        vTaskDelete(nullptr);
+    }
+
     WiFi.softAP(ssid, password);
+    WiFi.softAPConfig(IPAddress(192,168,4,1), IPAddress(192,168,4,1), IPAddress(255, 255, 255, 0));
+    dnsServer.start(53, "*", IPAddress(192,168,4,1));
+
     IPAddress IP = WiFi.softAPIP();
     Serial.print("AccessPoint IP: ");
     Serial.println(IP);
     WiFi.onEvent(ClientConnected, SYSTEM_EVENT_AP_STACONNECTED);
     WiFi.onEvent(ClientDisconnected, SYSTEM_EVENT_AP_STADISCONNECTED);
 
-    xTaskCreatePinnedToCore(SensorReadTask, "Sensor", 10000, (void*)&sample_size, 1, &TaskHandles[Tasks::Sensor], 1);
+    xTaskCreatePinnedToCore(SensorReadTask, "Sensor", 10000, (void*)&data_queue, 1, &TaskHandles[Tasks::Sensor], 1);
     //vTaskSuspend(TaskHandles[Tasks::Sensor]);
-
-    xTaskCreatePinnedToCore(ServerTask, "Server", 10000, nullptr, 1, &TaskHandles[Tasks::Server], 0);
+    xTaskCreatePinnedToCore(FileHandleTask, "Files", 10000, (void*)&data_queue, 1, &TaskHandles[Tasks::Files], 0);
+    xTaskCreatePinnedToCore(ServerTask, "Server", 10000, nullptr, 0, &TaskHandles[Tasks::Server], 0);
     vTaskSuspend(TaskHandles[Tasks::Server]);
 
-    //xTaskCreatePinnedToCore(OptimizeTasks, "Optimizer", 10000, (void*)&TaskHandles, 1, TaskHandles[2], 0);
-    esp_task_wdt_delete(xTaskGetIdleTaskHandle());
+    vTaskDelete(xTaskGetIdleTaskHandle());
 }
 
 void loop()
 {
-
+    taskYIELD();
 }

@@ -1,9 +1,11 @@
 /***********************************************************************************************************************
- * This task is responsible for figuring out the smallest stack size a task needs and reducing the tasks stack size to
- * that value to safe resources. *
- *
  * author: Mika Schmitt scmi1066@h-ka.de *
- * last modified: 19.01.2022 *
+ * last modified: 2t.01.2022 *
 ***********************************************************************************************************************/
 
+#ifndef FILEHANDLETASK_H
+#define FILEHANDLETASK_H
 
+[[noreturn]] void FileHandleTask(void * parameters);
+
+#endif //FILEHANDLETASK_H
