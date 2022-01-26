@@ -27,9 +27,10 @@
                 file.print((char)((std::queue<char>*)parameter)->front());
                 ((std::queue<char>*)parameter)->pop();
             }
+            Serial.println("Emptied queue");
             file.close();
             taskYIELD();
         }
-        taskYIELD();
+        vTaskDelay(10 / portTICK_PERIOD_MS);
     }
 }

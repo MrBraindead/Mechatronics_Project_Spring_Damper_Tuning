@@ -2,25 +2,12 @@ html {
       font-family: Arial, Helvetica, sans-serif;
       text-align: center;
     }
-    h1 {
-      font-size: 1.8rem;
-      color: black;
-    }
-    h2{
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: #143642;
-    }
-    .topnav {
-      overflow: hidden;
-      background-color: #143642;
-    }
     body {
       margin: 0;
     }
     .content {
       padding: 30px;
-      max-width: 600px;
+      max-width: 1200px;
       margin: 0 auto;
     }
     .card {
@@ -32,10 +19,11 @@ html {
     .button {
       padding: 15px 50px;
       font-size: 24px;
+      width: 250px;
       text-align: center;
       outline: none;
       color: #fff;
-      background-color: #0f8b8d;
+      background-color: #6FB7EB;
       border: none;
       border-radius: 5px;
       -webkit-touch-callout: none;
@@ -48,7 +36,7 @@ html {
     }
     /*.button:hover {background-color: #0f8b8d}*/
     .button:active {
-      background-color: #0f8b8d;
+      background-color: #6FB7EB;
       box-shadow: 2 2px #CDCDCD;
       transform: translateY(2px);
     }
@@ -56,4 +44,4 @@ html {
       font-size: 1.5rem;
       color:#8c8c8c;
       font-weight: bold;
-    }
+}

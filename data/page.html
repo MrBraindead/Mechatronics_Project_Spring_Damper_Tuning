@@ -1,15 +1,19 @@
 <!DOCTYPE HTML><html lang="">
 <head>
-  	<title>ESP Web Server</title>
-  	<meta name="viewport" content="width=device-width, initial-scale=1">
-  	<link rel="icon" href="data:,">
-  	<link href="style.css" rel="stylesheet" type="text/css">
-  	<script src="script.js"></script>
+  <title>ESP Web Server</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <link href="style.css" rel="stylesheet" type="text/css">
+  <script src="script.js"></script>
 	<script src="highcharts.js"></script>
 </head>
 <body>
 <div class="content">
-	<p><button id="button" class="button">Refresh</button></p>
+	<p>
+	  <button id="button_refresh" class="button width">Refresh</button>
+	  <button id="button_start_stop" class="button">Start</button>
+		<button id="button_clear" class="button">Clear</button>
+	</p>
   	<div class="container" id="chart_front_travel"></div>
   	<div class="container" id="chart_rear_travel"></div>
 </div>

@@ -21,24 +21,19 @@ AsyncWebSocket ws("/ws");
 
 const char *index_html;
 
-void notifyClients()
+void sendDataUri()
 {
-    File file = SPIFFS.open("/data.bin", FILE_READ);
-    if(!file)
+    ws.textAll("/data.bin");
+}
+
+void notifyClients(bool state)
+{
+    if(state)
     {
-        Serial.println("Could not open file data.bin for writing");
+        ws.textAll("SensorON");
+        return;
     }
-    else{
-        try{
-            char *data = new char[file.size()];
-            file.readBytes(data, file.size());
-            ws.binaryAll(data);
-            file.close();
-        }
-        catch(std::exception &e){
-            Serial.println(e.what());
-        }
-    }
+    ws.textAll("SensorOFF");
 }
 
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t length)
@@ -49,11 +44,27 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t length)
         data[length] = 0;
         if (strcmp((char *) data, "getData") == 0)
         {
-            notifyClients();
+            sendDataUri();
+            return;
         }
-        else{
-            Serial.println(reinterpret_cast<char*>(data));
+        if(strcmp((char *) data, "toggleSensors") == 0)
+        {
+            running = !running;
+            ToggleSensors(running);
+            notifyClients(running);
+            return;
         }
+        if(strcmp((char *) data, "clear") == 0)
+        {
+            File file = SPIFFS.open("/data.bin", FILE_WRITE);
+            if(file)
+            {
+                file.print("");
+                file.close();
+            }
+            return;
+        }
+        Serial.println(reinterpret_cast<char*>(data));
     }
 }
 

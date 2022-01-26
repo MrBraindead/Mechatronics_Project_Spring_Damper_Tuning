@@ -10,6 +10,7 @@
 #include <esp_task_wdt.h>
 #include "SensorReadTask.h"
 #include <queue>
+#include "main.h"
 
 void SensorReadTask( void * parameter )
 {
@@ -29,6 +30,8 @@ void SensorReadTask( void * parameter )
             // We lose 4 bits of precision but this is totally fine
             // in this application
             ((std::queue<char>*)parameter)->push((char)(input >> 4));
+
+            Serial.println(input >> 4);
         }
         catch(std::exception &e)
         {
