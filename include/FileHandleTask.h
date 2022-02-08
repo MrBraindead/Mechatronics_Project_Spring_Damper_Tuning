@@ -6,6 +6,6 @@
 #ifndef FILEHANDLETASK_H
 #define FILEHANDLETASK_H
 
-[[noreturn]]void FileHandleTask(void * parameters);
+[[noreturn]] void FileHandleTask(void * parameters);
 
 #endif

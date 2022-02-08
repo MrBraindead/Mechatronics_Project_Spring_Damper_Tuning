@@ -10,7 +10,6 @@
 #include <esp_task_wdt.h>
 #include "SensorReadTask.h"
 #include <queue>
-#include "main.h"
 
 void SensorReadTask( void * parameter )
 {
@@ -29,15 +28,15 @@ void SensorReadTask( void * parameter )
             // We lose 4 bits of precision but this is totally fine
             // in this application
             unsigned int input = analogRead(potentiometer_front);
-            ((std::queue<char>*)parameter)->push((char)(input >> 4));
+            ((std::queue<char>*)parameter)->push((char)(input  >> 4));
             input = analogRead(potentiometer_rear);
             ((std::queue<char>*)parameter)->push((char)(input >> 4));
         }
         catch(std::exception &e)
         {
-            // The only exception that is expected here is when the stack is full. This should never happen but if it does
-            // then there probably is a critical error somewhere else in the code and there is no point in running this task.
-            // Therefore, it is being suspended.
+            // The only exception that is expected here is when the stack is full. This should never happen but if it
+            // does then there probably is a critical error somewhere else in the code and there is no point in running
+            // this task. Therefore, it is being suspended.
             Serial.printf("Error %s", e.what());
             vTaskSuspend(nullptr);
         }

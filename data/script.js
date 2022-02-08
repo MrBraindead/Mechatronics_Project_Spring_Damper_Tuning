@@ -1,7 +1,7 @@
 /***********************************************************************************************************************
  * author: Mika Schmitt scmi1066@h-ka.de *
  * last modified: 26.01.2022 *
- ***********************************************************************************************************************/
+ **********************************************************************************************************************/
 
 //websocket
 var gateway = `ws://${window.location.hostname}/ws`;
@@ -47,7 +47,8 @@ function onMessage(event) {
         const rear_data = [];   // data for shock
         const xmlhttp = new XMLHttpRequest();
         xmlhttp.open("GET", event.data, false);
-        xmlhttp.overrideMimeType("application/x-binary; charset=ISO-8859-1"); // Changing MIME Type so data is properly decoded
+        // Changing MIME Type so data// is properly decoded
+        xmlhttp.overrideMimeType("application/x-binary; charset=ISO-8859-1");
         xmlhttp.send();
         if(xmlhttp.status === 200){ // HTTP-request successful
             result = xmlhttp.responseText;
@@ -77,10 +78,10 @@ function onMessage(event) {
             for(let i = 0; i < result.length; i++) {
                 if(i%2)
                 {
-                    rear_data.push(Math.min(result.charCodeAt(i), 255));
+                    front_data.push(Math.min(result.charCodeAt(i), 255));
                     continue;
                 }
-                front_data.push(Math.min(result.charCodeAt(i), 255));
+                rear_data.push(Math.min(result.charCodeAt(i), 255));
             }
             chart_front_travel.series[0].setData(front_data);
             chart_rear_travel.series[0].setData(rear_data);

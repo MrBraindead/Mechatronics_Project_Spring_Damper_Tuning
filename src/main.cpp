@@ -2,10 +2,12 @@
  * This program is a utility to aid with tuning and calibrating spring damper systems. It reads data from two linear
  * potentiometers and provides a website where the data is depicted in two charts for easy analysis.
  *
- * references: Charts by Highcharts https://www.highcharts.com licenced under a Student License (Creative Commons (CC) Attribution-Non-Commercial) *
+ * references: Charts by Highcharts https://www.highcharts.com licenced under a Student License (Creative Commons (CC)
+ * Attribution-Non-Commercial) *
  *
  * author: Mika Schmitt scmi1066@h-ka.de *
- * usage: boot up the ESP32 -> Connect to the AP with the SSID "ESP32". The password is 123456789 -> Open Website on 192.168.4.1 *
+ * usage: boot up the ESP32 -> Connect to the AP with the SSID "ESP32". The password is 123456789
+ * -> Open Website on 192.168.4.1 *
  * last modified: 26.01.2022 *
 ***********************************************************************************************************************/
 
@@ -29,7 +31,8 @@ TaskHandle_t TaskHandles[3] = {nullptr, nullptr, nullptr}; // Handles for Sensor
 
 void ClientConnected(WiFiEvent_t event, WiFiEventInfo_t info)
 {
-    // When a Client connects to the AP and the Server-Task is suspended the Servertask is resumed and the Server is started
+    // When a Client connects to the AP and the Server-Task is suspended the Servertask is resumed and the Server
+    // is started
     Serial.println("Client connected to AP");
     if(eTaskGetState(TaskHandles[Tasks::Server]) == eSuspended)
     {
@@ -52,7 +55,8 @@ void ClientDisconnected(WiFiEvent_t event, WiFiEventInfo_t info)
 // This function is run when the Button is pressed and starts a Task that toggles the Sensors on or off
 void IRAM_ATTR RunToggleSensorTask()
 {
-    xTaskCreatePinnedToCore(ToggleSensors, "SensorToggle", 10000, (void *)TaskHandles, 0, nullptr, 1);
+    xTaskCreatePinnedToCore(ToggleSensors, "SensorToggle", 10000,
+                            (void *)TaskHandles, 0, nullptr, 1);
 }
 
 void setup()
@@ -81,10 +85,13 @@ void setup()
 
     // Create tasks.
     // All tasks are immediately suspended. They will be enabled when needed.
-    xTaskCreatePinnedToCore(SensorReadTask, "Sensor", 10000, (void*)&data_queue, 1, &TaskHandles[Tasks::Sensor], 1);
+    xTaskCreatePinnedToCore(SensorReadTask, "Sensor", 10000, (void*)&data_queue,
+                            1, &TaskHandles[Tasks::Sensor], 1);
     vTaskSuspend(TaskHandles[Tasks::Sensor]);
-    xTaskCreatePinnedToCore(FileHandleTask, "Files", 10000, (void*)&data_queue, 1, &TaskHandles[Tasks::Files], 0);
-    xTaskCreatePinnedToCore(ServerTask, "Server", 10000, (void *)TaskHandles, 0, &TaskHandles[Tasks::Server], 0);
+    xTaskCreatePinnedToCore(FileHandleTask, "Files", 10000, (void*)&data_queue,
+                            1, &TaskHandles[Tasks::Files], 0);
+    xTaskCreatePinnedToCore(ServerTask, "Server", 10000, (void *)TaskHandles,
+                            0, &TaskHandles[Tasks::Server], 0);
     vTaskSuspend(TaskHandles[Tasks::Server]);
 
     // Interrupt for the Button that will toggle the Sensors

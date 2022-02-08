@@ -39,7 +39,7 @@ void notifyClients(bool state)
     ws.textAll("SensorOFF");
 }
 
-// handles messages from the WebSocket
+// Handle messages from the WebSocket
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t length)
 {
     AwsFrameInfo *info = (AwsFrameInfo *) arg;
@@ -53,7 +53,8 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t length)
         }
         if(strcmp((char *) data, "toggleSensors") == 0) // Client requests to toggle the sensors
         {
-            xTaskCreatePinnedToCore(ToggleSensors, "SensorToggle", 10000, handle, 0, nullptr, 1);
+            xTaskCreatePinnedToCore(ToggleSensors, "SensorToggle", 10000,
+                                    handle, 0, nullptr, 1);
             return;
         }
         if(strcmp((char *) data, "clear") == 0) // Client requests to clear the sensor data
@@ -71,12 +72,14 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t length)
 }
 
 // handles WebSocket events
-void EventHandle(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t length)
+void EventHandle(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg,
+                 uint8_t *data, size_t length)
 {
     switch (type)
     {
         case WS_EVT_CONNECT:
-            Serial.printf("WebSocket %s: client %u connected from %s\n", server->url(), client->id(), client->remoteIP().toString().c_str());
+            Serial.printf("WebSocket %s: client %u connected from %s\n", server->url(), client->id(),
+                          client->remoteIP().toString().c_str());
             break;
         case WS_EVT_DISCONNECT:
             Serial.printf("WebSocket %s: client %u disconnected", server->url(), client->id());
@@ -85,7 +88,8 @@ void EventHandle(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventT
             handleWebSocketMessage(arg, data, length);
             break;
         case WS_EVT_ERROR:
-            Serial.printf("WebSocket %s: client %u error %u: %s\n", server->url(), client->id(), *((uint16_t *) arg), (char *) data);
+            Serial.printf("WebSocket %s: client %u error %u: %s\n", server->url(), client->id(),
+                          *((uint16_t *) arg), (char *) data);
             break;
         case WS_EVT_PONG:
             break;
@@ -102,11 +106,7 @@ void initWebSocket()
 void ServerTask(void *parameter)
 {
     handle = (TaskHandle_t)parameter;
-    TickType_t xLastWakeTime;
-    const TickType_t xFrequency = 100;
-    xLastWakeTime = xTaskGetTickCount();
 
-    int i = 0;
     initWebSocket();
 
     // server events:
